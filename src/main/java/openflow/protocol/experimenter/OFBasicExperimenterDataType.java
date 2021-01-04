@@ -1,0 +1,54 @@
+package openflow.protocol.experimenter;
+
+import openflow.protocol.Instantiable;
+
+/**
+ * Subclass of OFVendorDataType that works with any vendor data format that
+ * begins with a integral value to indicate the format of the remaining data.
+ * It maps from the per-vendor-id integral data type code to the object
+ * used to instantiate the class associated with that vendor data type.
+ *
+ * @author Rob Vaterlaus (rob.vaterlaus@bigswitch.com)
+ */
+public class OFBasicExperimenterDataType extends OFExperimenterDataType {
+
+    /**
+     * The data type value at the beginning of the vendor data.
+     */
+    protected long type;
+
+    /**
+     * Construct an empty (i.e. no specified data type value) vendor data type.
+     */
+    public OFBasicExperimenterDataType() {
+        super();
+        this.type = 0;
+    }
+
+    /**
+     * Store some information about the vendor data type, including wire protocol
+     * type number, derived class and instantiator.
+     *
+     * @param type Wire protocol number associated with this vendor data type
+     * @param instantiator An Instantiator<OFVendorData> implementation that
+     *              creates an instance of an appropriate subclass of OFVendorData.
+     */
+    public OFBasicExperimenterDataType(long type, Instantiable<OFExperimenterData> instantiator) {
+        super(instantiator);
+        this.type = type;
+    }
+
+    /**
+     * @return Returns the wire protocol value corresponding to this OFVendorDataType
+     */
+    public long getTypeValue() {
+        return this.type;
+    }
+
+    /**
+     * @param type the wire protocol value for this data type
+     */
+    public void setTypeValue(long type) {
+        this.type = type;
+    }
+}

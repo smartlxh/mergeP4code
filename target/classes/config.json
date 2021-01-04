@@ -1,0 +1,12 @@
+{
+  "modality" : [
+    {
+      "id" : 0,
+      "name": "sdnp.json"
+    },
+    {
+      "id": 1,
+      "name": "simple_ipv4forward.json"
+    }
+  ]
+}
