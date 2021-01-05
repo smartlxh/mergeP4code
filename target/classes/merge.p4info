@@ -6,13 +6,13 @@ tables {
   }
   match_fields {
     id: 1
-    name: "ipv41.srcAddr"
+    name: "ipv4.srcAddr"
     bitwidth: 32
     match_type: TERNARY
   }
   match_fields {
     id: 2
-    name: "ipv41.dstAddr"
+    name: "ipv4.dstAddr"
     bitwidth: 32
     match_type: TERNARY
   }

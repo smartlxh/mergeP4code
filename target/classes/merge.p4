@@ -307,7 +307,7 @@ action tag_forward(egress_spec) {
 }
 table tagIdentify {
     reads {
-        tag.outport : ternary;
+        tag.outport : ternary
     }
     actions {
         tag_forward;

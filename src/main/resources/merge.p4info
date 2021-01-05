@@ -75,6 +75,27 @@ tables {
   }
   size: 1024
 }
+tables {
+  preamble {
+    id: 33582632
+    name: "tagIdentify"
+    alias: "tagIdentify"
+  }
+  match_fields {
+    id: 1
+    name: "tag.outport"
+    bitwidth: 48
+    match_type: TERNARY
+  }
+  action_refs {
+    id: 16835640
+  }
+  action_refs {
+    id: 16800567
+    annotations: "@defaultonly()"
+  }
+  size: 1024
+}
 actions {
   preamble {
     id: 16800567
@@ -139,5 +160,17 @@ actions {
     id: 16830997
     name: "drop_pkt_sdnp"
     alias: "drop_pkt_sdnp"
+  }
+}
+actions {
+  preamble {
+    id: 16835640
+    name: "tag_forward"
+    alias: "tag_forward"
+  }
+  params {
+    id: 1
+    name: "egress_spec"
+    bitwidth: 9
   }
 }

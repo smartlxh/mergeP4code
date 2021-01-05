@@ -23,9 +23,36 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private final String COMMONHEADER = "ethernet_t";
     private final String FILEDIR = "./src/main/resources/";
+    private Boolean Tag = false;
 
     private List<P4JsonParser> parserList = new ArrayList<>();
     private Map<Header,P4JsonParser> header2ParserMap = new HashMap<>();
+
+    private final String TAGHEADER = "header_type tag_t {\n" +
+            "    fields {\n" +
+            "        outport : 48;\n" +
+            "    }\n" +
+            "}\n";
+
+    private final String TAGTABLE = "table tagIdentify {\n" +
+            "    reads {\n" +
+            "        tag.outport : ternary;\n" +
+            "    }\n" +
+            "    actions {\n" +
+            "        tag_forward;\n" +
+            "    }\n" +
+            "    \n" +
+            "}\n";
+
+    private final String TAGPARSER = "parser parse_tag {\n" +
+            "    extract(tag);\n" +
+            "    return ingress;\n" +
+            "}\n";
+
+    private final String TAGACTION = "action tag_forward(egress_spec) {\n" +
+            "    modify_field(ig_intr_md_for_tm.ucast_egress_port, egress_spec);\n" +
+            "}\n";
+
 
     private String getFileBetweenlines(int start,int end,String filename){
         int lines = 1;
@@ -71,6 +98,8 @@ public class Main {
         for(String name : headers.keySet()){
             headerVars.append("header "+name+" "+name.split("_")[0]+";"+"\n");
         }
+
+        headerVars.append("header tag_t tag;\n");
         return headerVars.toString();
     }
     private String formatEthernetParsers(List<Header> firstHeaderList){
@@ -81,6 +110,8 @@ public class Main {
                 keyValue.append("0x").append(item.getKey().toString().substring(0,item.getKey().getActualLen()/4)+" : ").append("parse_").append(item.getValue().getName().split("_")[0]).append(";").append("\n");
             }
         }
+        // add tag -- etherType = 0x1111
+        keyValue.append("0x1111 : parse_tag;\n");
        // logger.info(keyValue.toString());
         return keyValue.toString();
 
@@ -269,8 +300,10 @@ public class Main {
                 }
             }
         }
+        P4Str.append(TAGHEADER);
         // for headers
         P4Str.append(declareHeaderVar(name2HeaderMap));
+
         //logger.info(P4Str.toString());
         // for parsers
         final String parserStart = new String("parser start {\n" +
@@ -285,6 +318,7 @@ public class Main {
                 "}\n");
         P4Str.append(parserStart);
         P4Str.append(parse_ethernet);
+        P4Str.append(TAGPARSER);
         //logger.info(parse_ethernet);
 
         for(int i=0;i<firstHeaderList.size();i++){
@@ -305,13 +339,16 @@ public class Main {
             String tableAndAction = getFileBetweenlines(200,300,"./src/main/resources/"+modalityName);
             P4Str.append("\n");
             P4Str.append(tableAndAction);
-            logger.info("sdf");
-        }
 
-        logger.info("sdf");
+        }
+        P4Str.append(TAGACTION);
+        P4Str.append(TAGTABLE);
         // for ingress
         String ingress = "control ingress { \n";
         P4Str.append(ingress);
+        P4Str.append("if(ethernet.etherType == 0x1111){\n" +
+                "apply(tagIdentify);\n" +
+                "}\n");
         P4Str.append(formatIngress(firstHeaderList));
         P4Str.append("}\n");
         logger.info(P4Str.toString());
