@@ -32,10 +32,10 @@ tables {
     id: 16795668
   }
   action_refs {
-    id: 16819938
+    id: 16780529
   }
   action_refs {
-    id: 16796504
+    id: 16830997
   }
   action_refs {
     id: 16800567
@@ -64,15 +64,15 @@ actions {
 }
 actions {
   preamble {
-    id: 16819938
-    name: "nop"
-    alias: "nop"
+    id: 16780529
+    name: "nop_sdnp"
+    alias: "nop_sdnp"
   }
 }
 actions {
   preamble {
-    id: 16796504
-    name: "drop_pkt"
-    alias: "drop_pkt"
+    id: 16830997
+    name: "drop_pkt_sdnp"
+    alias: "drop_pkt_sdnp"
   }
 }

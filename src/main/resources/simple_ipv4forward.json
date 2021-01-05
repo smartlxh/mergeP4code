@@ -525,7 +525,7 @@
           ],
           "source_info" : {
             "filename" : "simple_ipv4forward.p4",
-            "line" : 115,
+            "line" : 200,
             "column" : 20,
             "source_fragment" : "egress_spec) { ..."
           }
@@ -548,7 +548,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "simple_ipv4forward.p4",
-            "line" : 125,
+            "line" : 210,
             "column" : 4,
             "source_fragment" : "drop()"
           }
@@ -574,7 +574,7 @@
           ],
           "source_info" : {
             "filename" : "simple_ipv4forward.p4",
-            "line" : 129,
+            "line" : 214,
             "column" : 5,
             "source_fragment" : "modify_field(ig_intr_md_for_tm.ucast_egress_port, 148)"
           }
@@ -593,7 +593,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "simple_ipv4forward.p4",
-            "line" : 133,
+            "line" : 218,
             "column" : 0,
             "source_fragment" : "table ipv4 { ..."
           },

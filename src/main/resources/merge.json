@@ -1,5 +1,5 @@
 {
-  "program" : "simple_ipv4forward.p4",
+  "program" : "merge.p4",
   "__meta__" : {
     "version" : [2, 7],
     "compiler" : "https://github.com/p4lang/p4c"
@@ -176,8 +176,18 @@
       ]
     },
     {
-      "name" : "tcp_t",
+      "name" : "sdnp_t",
       "id" : 13,
+      "fields" : [
+        ["dpid_src", 32, false],
+        ["port_src", 16, false],
+        ["port_dst", 16, false],
+        ["dpid_dst", 32, false]
+      ]
+    },
+    {
+      "name" : "tcp_t",
+      "id" : 14,
       "fields" : [
         ["srcPort", 16, false],
         ["dstPort", 16, false],
@@ -192,7 +202,7 @@
     },
     {
       "name" : "udp_t",
-      "id" : 14,
+      "id" : 15,
       "fields" : [
         ["srcPort", 16, false],
         ["dstPort", 16, false],
@@ -202,7 +212,7 @@
     },
     {
       "name" : "standard_metadata",
-      "id" : 15,
+      "id" : 16,
       "fields" : [
         ["ingress_port", 9, false],
         ["egress_spec", 9, false],
@@ -317,15 +327,22 @@
       "pi_omit" : true
     },
     {
-      "name" : "tcp",
+      "name" : "sdnp",
       "id" : 14,
+      "header_type" : "sdnp_t",
+      "metadata" : false,
+      "pi_omit" : true
+    },
+    {
+      "name" : "tcp",
+      "id" : 15,
       "header_type" : "tcp_t",
       "metadata" : false,
       "pi_omit" : true
     },
     {
       "name" : "udp",
-      "id" : 15,
+      "id" : 16,
       "header_type" : "udp_t",
       "metadata" : false,
       "pi_omit" : true
@@ -368,6 +385,12 @@
           "transitions" : [
             {
               "type" : "hexstr",
+              "value" : "0x5555",
+              "mask" : null,
+              "next_state" : "parse_sdnp"
+            },
+            {
+              "type" : "hexstr",
               "value" : "0x0800",
               "mask" : null,
               "next_state" : "parse_ipv4"
@@ -402,15 +425,15 @@
           "transitions" : [
             {
               "type" : "hexstr",
-              "value" : "0x06",
-              "mask" : null,
-              "next_state" : "parse_tcp"
-            },
-            {
-              "type" : "hexstr",
               "value" : "0x11",
               "mask" : null,
               "next_state" : "parse_udp"
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x06",
+              "mask" : null,
+              "next_state" : "parse_tcp"
             },
             {
               "value" : "default",
@@ -426,8 +449,31 @@
           ]
         },
         {
-          "name" : "parse_tcp",
+          "name" : "parse_sdnp",
           "id" : 2,
+          "parser_ops" : [
+            {
+              "parameters" : [
+                {
+                  "type" : "regular",
+                  "value" : "sdnp"
+                }
+              ],
+              "op" : "extract"
+            }
+          ],
+          "transitions" : [
+            {
+              "value" : "default",
+              "mask" : null,
+              "next_state" : null
+            }
+          ],
+          "transition_key" : []
+        },
+        {
+          "name" : "parse_tcp",
+          "id" : 3,
           "parser_ops" : [
             {
               "parameters" : [
@@ -450,7 +496,7 @@
         },
         {
           "name" : "parse_udp",
-          "id" : 3,
+          "id" : 4,
           "parser_ops" : [
             {
               "parameters" : [
@@ -473,7 +519,7 @@
         },
         {
           "name" : "start",
-          "id" : 4,
+          "id" : 5,
           "parser_ops" : [],
           "transitions" : [
             {
@@ -492,7 +538,7 @@
     {
       "name" : "deparser",
       "id" : 0,
-      "order" : ["ethernet", "ipv4", "udp", "tcp"]
+      "order" : ["ethernet", "ipv4", "tcp", "udp", "sdnp"]
     }
   ],
   "meter_arrays" : [],
@@ -502,8 +548,14 @@
   "learn_lists" : [],
   "actions" : [
     {
-      "name" : "ipv4_forward",
+      "name" : "NoAction",
       "id" : 0,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "ipv4_forward",
+      "id" : 1,
       "runtime_data" : [
         {
           "name" : "egress_spec",
@@ -524,8 +576,8 @@
             }
           ],
           "source_info" : {
-            "filename" : "simple_ipv4forward.p4",
-            "line" : 200,
+            "filename" : "merge.p4",
+            "line" : 194,
             "column" : 20,
             "source_fragment" : "egress_spec) { ..."
           }
@@ -534,21 +586,21 @@
     },
     {
       "name" : "nop",
-      "id" : 1,
+      "id" : 2,
       "runtime_data" : [],
       "primitives" : []
     },
     {
       "name" : "drop_pkt",
-      "id" : 2,
+      "id" : 3,
       "runtime_data" : [],
       "primitives" : [
         {
           "op" : "drop",
           "parameters" : [],
           "source_info" : {
-            "filename" : "simple_ipv4forward.p4",
-            "line" : 210,
+            "filename" : "merge.p4",
+            "line" : 204,
             "column" : 4,
             "source_fragment" : "drop()"
           }
@@ -557,7 +609,7 @@
     },
     {
       "name" : "packet_in",
-      "id" : 3,
+      "id" : 4,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -573,10 +625,64 @@
             }
           ],
           "source_info" : {
-            "filename" : "simple_ipv4forward.p4",
-            "line" : 214,
+            "filename" : "merge.p4",
+            "line" : 208,
             "column" : 5,
             "source_fragment" : "modify_field(ig_intr_md_for_tm.ucast_egress_port, 148)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "sdnp_forward",
+      "id" : 5,
+      "runtime_data" : [
+        {
+          "name" : "egress_spec",
+          "bitwidth" : 9
+        }
+      ],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["ig_intr_md_for_tm", "ucast_egress_port"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 0
+            }
+          ],
+          "source_info" : {
+            "filename" : "merge.p4",
+            "line" : 92,
+            "column" : 20,
+            "source_fragment" : "egress_spec) { ..."
+          }
+        }
+      ]
+    },
+    {
+      "name" : "nop_sdnp",
+      "id" : 6,
+      "runtime_data" : [],
+      "primitives" : []
+    },
+    {
+      "name" : "drop_pkt_sdnp",
+      "id" : 7,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "drop",
+          "parameters" : [],
+          "source_info" : {
+            "filename" : "merge.p4",
+            "line" : 102,
+            "column" : 4,
+            "source_fragment" : "drop()"
           }
         }
       ]
@@ -586,14 +692,71 @@
     {
       "name" : "ingress",
       "id" : 0,
-      "init_table" : "ipv4",
+      "init_table" : "node_2",
       "tables" : [
         {
-          "name" : "ipv4",
+          "name" : "sdnp",
           "id" : 0,
           "source_info" : {
-            "filename" : "simple_ipv4forward.p4",
-            "line" : 218,
+            "filename" : "merge.p4",
+            "line" : 107,
+            "column" : 0,
+            "source_fragment" : "table sdnp { ..."
+          },
+          "key" : [
+            {
+              "match_type" : "ternary",
+              "name" : "sdnp.dpid_src",
+              "target" : ["sdnp", "dpid_src"],
+              "mask" : null
+            },
+            {
+              "match_type" : "ternary",
+              "name" : "sdnp.port_src",
+              "target" : ["sdnp", "port_src"],
+              "mask" : null
+            },
+            {
+              "match_type" : "ternary",
+              "name" : "sdnp.dpid_dst",
+              "target" : ["sdnp", "dpid_dst"],
+              "mask" : null
+            },
+            {
+              "match_type" : "ternary",
+              "name" : "sdnp.port_dst",
+              "target" : ["sdnp", "port_dst"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "ternary",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [5, 6, 7, 0],
+          "actions" : ["sdnp_forward", "nop_sdnp", "drop_pkt_sdnp", "NoAction"],
+          "base_default_next" : "node_4",
+          "next_tables" : {
+            "sdnp_forward" : "node_4",
+            "nop_sdnp" : "node_4",
+            "drop_pkt_sdnp" : "node_4",
+            "NoAction" : "node_4"
+          },
+          "default_entry" : {
+            "action_id" : 0,
+            "action_const" : false,
+            "action_data" : [],
+            "action_entry_const" : false
+          }
+        },
+        {
+          "name" : "ipv4",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "merge.p4",
+            "line" : 212,
             "column" : 0,
             "source_fragment" : "table ipv4 { ..."
           },
@@ -617,7 +780,7 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [0, 1, 2, 3],
+          "action_ids" : [1, 2, 3, 4],
           "actions" : ["ipv4_forward", "nop", "drop_pkt", "packet_in"],
           "base_default_next" : null,
           "next_tables" : {
@@ -627,7 +790,7 @@
             "packet_in" : null
           },
           "default_entry" : {
-            "action_id" : 3,
+            "action_id" : 4,
             "action_const" : false,
             "action_data" : [],
             "action_entry_const" : false
@@ -635,7 +798,60 @@
         }
       ],
       "action_profiles" : [],
-      "conditionals" : []
+      "conditionals" : [
+        {
+          "name" : "node_2",
+          "id" : 0,
+          "source_info" : {
+            "filename" : "merge.p4",
+            "line" : 295,
+            "column" : 22,
+            "source_fragment" : "=="
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["ethernet", "etherType"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x5555"
+              }
+            }
+          },
+          "true_next" : "sdnp",
+          "false_next" : "node_4"
+        },
+        {
+          "name" : "node_4",
+          "id" : 1,
+          "source_info" : {
+            "filename" : "merge.p4",
+            "line" : 298,
+            "column" : 22,
+            "source_fragment" : "=="
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["ethernet", "etherType"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x0800"
+              }
+            }
+          },
+          "false_next" : null,
+          "true_next" : "ipv4"
+        }
+      ]
     },
     {
       "name" : "egress",

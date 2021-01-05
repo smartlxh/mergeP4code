@@ -36,29 +36,11 @@ header_type sdnp_t {
     }
 }
 
-header_type ipv4_t {
-     fields {
-         version : 4;
-         ihl : 4;
-         diffserv : 8;
-         totalLen : 16;
-         identification : 16;
-         flags : 3;
-         fragOffset : 13;
-         ttl : 8;
-         protocol : 8;
-         hdrChecksum : 16;
-         srcAddr : 32;
-         dstAddr : 32;
-    }
-}
 
 
 
 header ethernet_t ethernet;
-
 header sdnp_t sdnp;
-header ipv4_t ipv4;
 
 //-----------------------------parser---------------------------------------
 parser start {
@@ -81,16 +63,139 @@ parser parse_ethernet {
 
 parser parse_sdnp {
     extract(sdnp);
-    return parse_ipv4;
-}
-
-parser parse_ipv4 {
-    extract(ipv4);
-    return ingress;
+    return ingress; 
 }
 
 
 //-----------------------------pipeline-------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 action sdnp_forward(egress_spec) {
     modify_field(ig_intr_md_for_tm.ucast_egress_port, egress_spec);
@@ -98,10 +203,10 @@ action sdnp_forward(egress_spec) {
     //ipv4.ttl = ipv4.ttl - 1;
 }
 
-action nop() {
+action nop_sdnp() {
 }
 
-action drop_pkt() {
+action drop_pkt_sdnp() {
     drop();
 }
 
@@ -115,10 +220,82 @@ table sdnp {
         sdnp.port_dst : ternary;
     }
     actions {
-        sdnp_forward; nop; drop_pkt;
+        sdnp_forward; nop_sdnp; drop_pkt_sdnp;
     }
     
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 control ingress {

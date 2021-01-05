@@ -1,5 +1,37 @@
 tables {
   preamble {
+    id: 33593298
+    name: "ipv4"
+    alias: "ipv4"
+  }
+  match_fields {
+    id: 1
+    name: "ipv41.srcAddr"
+    bitwidth: 32
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 2
+    name: "ipv41.dstAddr"
+    bitwidth: 32
+    match_type: TERNARY
+  }
+  action_refs {
+    id: 16786453
+  }
+  action_refs {
+    id: 16819938
+  }
+  action_refs {
+    id: 16796504
+  }
+  action_refs {
+    id: 16823004
+  }
+  size: 1024
+}
+tables {
+  preamble {
     id: 33602467
     name: "sdnp"
     alias: "sdnp"
@@ -48,6 +80,39 @@ actions {
     id: 16800567
     name: "NoAction"
     alias: "NoAction"
+  }
+}
+actions {
+  preamble {
+    id: 16786453
+    name: "ipv4_forward"
+    alias: "ipv4_forward"
+  }
+  params {
+    id: 1
+    name: "egress_spec"
+    bitwidth: 9
+  }
+}
+actions {
+  preamble {
+    id: 16819938
+    name: "nop"
+    alias: "nop"
+  }
+}
+actions {
+  preamble {
+    id: 16796504
+    name: "drop_pkt"
+    alias: "drop_pkt"
+  }
+}
+actions {
+  preamble {
+    id: 16823004
+    name: "packet_in"
+    alias: "packet_in"
   }
 }
 actions {

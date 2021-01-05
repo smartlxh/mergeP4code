@@ -158,26 +158,8 @@
       ]
     },
     {
-      "name" : "ipv4_t",
-      "id" : 12,
-      "fields" : [
-        ["version", 4, false],
-        ["ihl", 4, false],
-        ["diffserv", 8, false],
-        ["totalLen", 16, false],
-        ["identification", 16, false],
-        ["flags", 3, false],
-        ["fragOffset", 13, false],
-        ["ttl", 8, false],
-        ["protocol", 8, false],
-        ["hdrChecksum", 16, false],
-        ["srcAddr", 32, false],
-        ["dstAddr", 32, false]
-      ]
-    },
-    {
       "name" : "sdnp_t",
-      "id" : 13,
+      "id" : 12,
       "fields" : [
         ["dpid_src", 32, false],
         ["port_src", 16, false],
@@ -187,7 +169,7 @@
     },
     {
       "name" : "standard_metadata",
-      "id" : 14,
+      "id" : 13,
       "fields" : [
         ["ingress_port", 9, false],
         ["egress_spec", 9, false],
@@ -295,15 +277,8 @@
       "pi_omit" : true
     },
     {
-      "name" : "ipv4",
-      "id" : 13,
-      "header_type" : "ipv4_t",
-      "metadata" : false,
-      "pi_omit" : true
-    },
-    {
       "name" : "sdnp",
-      "id" : 14,
+      "id" : 13,
       "header_type" : "sdnp_t",
       "metadata" : false,
       "pi_omit" : true
@@ -364,31 +339,8 @@
           ]
         },
         {
-          "name" : "parse_ipv4",
-          "id" : 1,
-          "parser_ops" : [
-            {
-              "parameters" : [
-                {
-                  "type" : "regular",
-                  "value" : "ipv4"
-                }
-              ],
-              "op" : "extract"
-            }
-          ],
-          "transitions" : [
-            {
-              "value" : "default",
-              "mask" : null,
-              "next_state" : null
-            }
-          ],
-          "transition_key" : []
-        },
-        {
           "name" : "parse_sdnp",
-          "id" : 2,
+          "id" : 1,
           "parser_ops" : [
             {
               "parameters" : [
@@ -404,14 +356,14 @@
             {
               "value" : "default",
               "mask" : null,
-              "next_state" : "parse_ipv4"
+              "next_state" : null
             }
           ],
           "transition_key" : []
         },
         {
           "name" : "start",
-          "id" : 3,
+          "id" : 2,
           "parser_ops" : [],
           "transitions" : [
             {
@@ -430,7 +382,7 @@
     {
       "name" : "deparser",
       "id" : 0,
-      "order" : ["ethernet", "sdnp", "ipv4"]
+      "order" : ["ethernet", "sdnp"]
     }
   ],
   "meter_arrays" : [],
@@ -469,7 +421,7 @@
           ],
           "source_info" : {
             "filename" : "sdnp.p4",
-            "line" : 95,
+            "line" : 172,
             "column" : 20,
             "source_fragment" : "egress_spec) { ..."
           }
@@ -477,13 +429,13 @@
       ]
     },
     {
-      "name" : "nop",
+      "name" : "nop_sdnp",
       "id" : 2,
       "runtime_data" : [],
       "primitives" : []
     },
     {
-      "name" : "drop_pkt",
+      "name" : "drop_pkt_sdnp",
       "id" : 3,
       "runtime_data" : [],
       "primitives" : [
@@ -492,7 +444,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "sdnp.p4",
-            "line" : 105,
+            "line" : 182,
             "column" : 4,
             "source_fragment" : "drop()"
           }
@@ -511,7 +463,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "sdnp.p4",
-            "line" : 110,
+            "line" : 187,
             "column" : 0,
             "source_fragment" : "table sdnp { ..."
           },
@@ -548,12 +500,12 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [1, 2, 3, 0],
-          "actions" : ["sdnp_forward", "nop", "drop_pkt", "NoAction"],
+          "actions" : ["sdnp_forward", "nop_sdnp", "drop_pkt_sdnp", "NoAction"],
           "base_default_next" : null,
           "next_tables" : {
             "sdnp_forward" : null,
-            "nop" : null,
-            "drop_pkt" : null,
+            "nop_sdnp" : null,
+            "drop_pkt_sdnp" : null,
             "NoAction" : null
           },
           "default_entry" : {

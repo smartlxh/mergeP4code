@@ -13,20 +13,63 @@ import org.slf4j.LoggerFactory;
 import parser.Field;
 import parser.Header;
 import parser.P4JsonParser;
+import parser.Table;
 
+import java.io.*;
 import java.sql.PseudoColumnUsage;
 import java.util.*;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private final String COMMONHEADER = "ethernet_t";
+    private final String FILEDIR = "./src/main/resources/";
 
     private List<P4JsonParser> parserList = new ArrayList<>();
+    private Map<Header,P4JsonParser> header2ParserMap = new HashMap<>();
+
+    private String getFileBetweenlines(int start,int end,String filename){
+        int lines = 1;
+        StringBuilder builder = new StringBuilder();
+        File file = new File(filename);
+
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        LineNumberReader reader = new LineNumberReader(fileReader);
+        String line = "";
+
+        while(true){
+            try {
+                if ((line=reader.readLine()) != null) {
+                    lines++;
+                    logger.info(String.valueOf(lines));
+                    if(lines <= end && lines>=start){
+                        builder.append(line.toString()).append("\n");
+                        //logger.info(line.toString());
+                    }
+                    if(lines > end) break;
+                }else{
+                    break;
+                }
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+
+            }
+
+        }
+
+        return builder.toString();
+    }
     private HashMap<String,List<Header> > name2HeaderListMap = new HashMap<>();
     private String declareHeaderVar(Map<String,Header> headers){
         StringBuilder headerVars = new StringBuilder();
         for(String name : headers.keySet()){
-            headerVars.append("header "+name+" "+name.split("_")[0]+"\n");
+            headerVars.append("header "+name+" "+name.split("_")[0]+";"+"\n");
         }
         return headerVars.toString();
     }
@@ -35,7 +78,7 @@ public class Main {
         for(int i=0;i<firstHeaderList.size();i++){
             Map<Value,Header> map = firstHeaderList.get(i).getNextsMap();
             for(Map.Entry<Value,Header> item : map.entrySet()){
-                keyValue.append("0x").append(item.getKey().toString().substring(0,4)+" : ").append("parse_").append(item.getValue().getName().split("_")[0]).append("\n");
+                keyValue.append("0x").append(item.getKey().toString().substring(0,item.getKey().getActualLen()/4)+" : ").append("parse_").append(item.getValue().getName().split("_")[0]).append(";").append("\n");
             }
         }
        // logger.info(keyValue.toString());
@@ -46,13 +89,14 @@ public class Main {
         StringBuilder builder = new StringBuilder();
         Field field = header.getSelect();
         if(field != null){
-            builder.append("return select(lastest.").append(field.getName().toString()).append(")").append(" {\n");
+            builder.append("return select(latest.").append(field.getName().toString()).append(")").append(" {\n");
         }
         else{
             return "return ingress;\n";
         }
         for(Map.Entry<Value,Header> item : header.getNextsMap().entrySet()){
-            builder.append("0x").append(item.getKey().toString().substring(0,4)+" : ").append("parse_").append(item.getValue().getName().split("_")[0]).append("\n");
+            //logger.info(item.getKey().toString()+":"+item.getKey().getActualLen()+":");
+            builder.append("0x").append(item.getKey().toString().substring(0,item.getKey().getActualLen()/4)+" : ").append("parse_").append(item.getValue().getName().split("_")[0]).append(";").append("\n");
         }
         builder.append("default: ingress;\n}");
         return builder.toString();
@@ -72,6 +116,68 @@ public class Main {
             Header header = item.getValue();
             formatParser(header,builder);
         }
+
+    }
+
+    private String formatTableApply(Header firstHeader){
+        P4JsonParser parser = header2ParserMap.get(firstHeader);
+        List<Table> tableList = parser.getTableList();
+        StringBuilder builder = new StringBuilder();
+        for(int i=0;i<tableList.size();i++){
+            builder.append("apply(").append(tableList.get(i).getName()).append(");\n");
+        }
+        return builder.toString();
+    }
+
+    private String formatIngress(List<Header> firstHeaderList){
+        StringBuilder builder = new StringBuilder();
+
+        for(int i=0;i<firstHeaderList.size();i++){
+            Map<Value,Header> map = firstHeaderList.get(i).getNextsMap();
+           // builder.append("if(ethernet.etherType == %s)");
+            int size = map.size();
+            String str = "if(ethernet.etherType == %s";
+            for(int j=0;j<size-1;j++){
+                str+="||ethernet.etherType==%s";
+            }
+            str+=")";
+            logger.info(str);
+            List<String> values = new ArrayList<>();
+            for(Map.Entry<Value,Header> item : map.entrySet()){
+               // keyValue.append("0x").append(item.getKey().toString().substring(0,4)+" : ").append("parse_").append(item.getValue().getName().split("_")[0]).append("\n");
+                String value = "0x"+item.getKey().toString().substring(0,4);// for ethernet.ethertype 4byte
+                values.add(value);
+            }
+            //
+            switch(values.size()){
+                case 1:
+                        builder.append(String.format(str,values.get(0)));
+
+                        break;
+                case 2:
+                        builder.append(String.format(str,values.get(0),values.get(1)));
+                        break;
+
+            }
+            builder.append("{\n");
+            builder.append(formatTableApply(firstHeaderList.get(i)));
+            builder.append("}\n");
+
+        }
+        return builder.toString();
+
+    }
+    private void writeStrtoFile(String str,String fileName){
+        FileWriter writer;
+        try {
+            writer = new FileWriter(fileName);
+            writer.write(str);
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
     }
     public void mergeCode(){
@@ -102,7 +208,8 @@ public class Main {
             //parser.displayDAG(Header.firestHeader);
             //System.out.println(Header.firestHeader.getName().toString());
             firstHeaderList.add(Header.firestHeader);
-            logger.info(Header.firestHeader.getName());
+            header2ParserMap.put(Header.firestHeader,parser);
+           // logger.info(Header.firestHeader.getName());
 
             Queue<Header> headerQueue= new LinkedList<Header>();
             headerQueue.add(Header.firestHeader);
@@ -113,10 +220,12 @@ public class Main {
                 String headerName = temp.getName().toString();
                 if(name2HeaderListMap.containsKey(headerName)){
                     name2HeaderListMap.get(headerName).add(temp);
+                    //logger.info(headerName+"1");
                 }else{
                    List<Header> headerList = new ArrayList<>();
                    headerList.add(temp);
                    name2HeaderListMap.put(headerName,headerList);
+                    //logger.info(headerName+"2");
                 }
 
                 Map<Value,Header> nextHeadersMap = temp.getNextsMap();
@@ -129,6 +238,9 @@ public class Main {
 
         //echo to a new P4 file
         StringBuilder P4Str = new StringBuilder();
+        String headerFile = "#include \"includes/intrinsic_metadata.p4\"\n" +
+                "#include \"includes/constants.p4\"";
+        P4Str.append(headerFile).append("\n");
         // save all the name of Header after changing the same name of headers
         HashMap<String,Header> name2HeaderMap = new HashMap<>();
 
@@ -140,13 +252,13 @@ public class Main {
             // the start header of new P4
             if(headerName.equals(COMMONHEADER)){
                 P4Str.append(headers.get(0).toString()); // output any header between the headers of ethernet
-
+                name2HeaderMap.put(headers.get(0).getName().toString(),headers.get(0));
                 continue;
             }
             else{
                 if(headers.size() > 1){ // this is the case that there are same name of multi headers;
                     for(int j=0;j<headers.size();j++){
-                        headers.get(j).setName(headerName+"_"+String.valueOf(j));
+                        headers.get(j).setName(headerName.split("_")[0]+String.valueOf(j)+"_t");
                         name2HeaderMap.put(headers.get(j).getName().toString(),headers.get(j));
                         P4Str.append(headers.get(j).toString());
                     }
@@ -163,7 +275,7 @@ public class Main {
         // for parsers
         final String parserStart = new String("parser start {\n" +
                 "    return parse_ethernet;\n" +
-                "}");
+                "}\n");
         String parse_ethernet = new String("parser parse_ethernet {\n" +
                 "    extract(ethernet);\n" +
                 "    return select(latest.etherType) {\n" +
@@ -171,8 +283,10 @@ public class Main {
                 "        default: ingress;\n" +
                 "    }\n" +
                 "}\n");
+        P4Str.append(parserStart);
         P4Str.append(parse_ethernet);
         //logger.info(parse_ethernet);
+
         for(int i=0;i<firstHeaderList.size();i++){
             Header header = firstHeaderList.get(i);
             for(Header head : header.getNextsMap().values()){
@@ -180,7 +294,28 @@ public class Main {
             }
 
         }
+        //logger.info(P4Str.toString());
+
+        // for action and table
+        // just copy the soruce code for line200 to line300.so the P4 code must set aside 200 to 300 lines for writing tables and actions
+        // must not have the same name of action
+
+        for(int i=0;i<modalityList.size();i++){
+            String modalityName = modalityList.get(i).split("\\.")[0]+".p4";
+            String tableAndAction = getFileBetweenlines(200,300,"./src/main/resources/"+modalityName);
+            P4Str.append("\n");
+            P4Str.append(tableAndAction);
+            logger.info("sdf");
+        }
+
+        logger.info("sdf");
+        // for ingress
+        String ingress = "control ingress { \n";
+        P4Str.append(ingress);
+        P4Str.append(formatIngress(firstHeaderList));
+        P4Str.append("}\n");
         logger.info(P4Str.toString());
+        writeStrtoFile(P4Str.toString(),"./src/main/resources/merge.p4");
 
     }
 
