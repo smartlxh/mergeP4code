@@ -55,6 +55,7 @@ etherType : 16;
 header_type tag_t {
     fields {
         outport : 48;
+        etherType : 16;
     }
 }
 header ipv4_t ipv4;
@@ -303,11 +304,14 @@ table ipv4 {
 
 
 action tag_forward(egress_spec) {
+    
+    modify_field(ethernet.etherType,tag.etherType);
     modify_field(ig_intr_md_for_tm.ucast_egress_port, egress_spec);
+    remove_header(tag);
 }
 table tagIdentify {
     reads {
-        tag.outport : ternary
+        tag.outport : ternary;
     }
     actions {
         tag_forward;

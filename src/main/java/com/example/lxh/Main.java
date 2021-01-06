@@ -31,6 +31,7 @@ public class Main {
     private final String TAGHEADER = "header_type tag_t {\n" +
             "    fields {\n" +
             "        outport : 48;\n" +
+            "        etherType : 16;\n"+
             "    }\n" +
             "}\n";
 
@@ -50,7 +51,10 @@ public class Main {
             "}\n";
 
     private final String TAGACTION = "action tag_forward(egress_spec) {\n" +
+            "    \n" +
+            "    modify_field(ethernet.etherType,tag.etherType);\n" +
             "    modify_field(ig_intr_md_for_tm.ucast_egress_port, egress_spec);\n" +
+            "    remove_header(tag);\n" +
             "}\n";
 
 
@@ -214,8 +218,13 @@ public class Main {
     public void mergeCode(){
         Config config = new Config();
         List<String> modalityList = config.config();
-        if(modalityList.size() == 1){
+        /*if(modalityList.size() == 1){
             logger.error("just one modality,not need to merge!");
+            return ;
+        }*/
+
+        if(modalityList.size() == 0){
+            logger.error("no modality,can not merge!");
             return ;
         }
 

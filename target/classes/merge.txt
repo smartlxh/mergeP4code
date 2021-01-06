@@ -1,3 +1,6 @@
+pkg_info {
+  arch: "v1model"
+}
 tables {
   preamble {
     id: 33593298
@@ -71,7 +74,8 @@ tables {
   }
   action_refs {
     id: 16800567
-    annotations: "@defaultonly()"
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
   }
   size: 1024
 }
@@ -92,7 +96,8 @@ tables {
   }
   action_refs {
     id: 16800567
-    annotations: "@defaultonly()"
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
   }
   size: 1024
 }
@@ -173,4 +178,6 @@ actions {
     name: "egress_spec"
     bitwidth: 9
   }
+}
+type_info {
 }

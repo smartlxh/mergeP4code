@@ -189,7 +189,8 @@
       "name" : "tag_t",
       "id" : 14,
       "fields" : [
-        ["outport", 48, false]
+        ["outport", 48, false],
+        ["etherType", 16, false]
       ]
     },
     {
@@ -626,7 +627,7 @@
           ],
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 205,
+            "line" : 206,
             "column" : 20,
             "source_fragment" : "egress_spec) { ..."
           }
@@ -649,7 +650,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 215,
+            "line" : 216,
             "column" : 4,
             "source_fragment" : "drop()"
           }
@@ -675,7 +676,7 @@
           ],
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 219,
+            "line" : 220,
             "column" : 5,
             "source_fragment" : "modify_field(ig_intr_md_for_tm.ucast_egress_port, 148)"
           }
@@ -706,7 +707,7 @@
           ],
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 103,
+            "line" : 104,
             "column" : 20,
             "source_fragment" : "egress_spec) { ..."
           }
@@ -729,7 +730,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 113,
+            "line" : 114,
             "column" : 4,
             "source_fragment" : "drop()"
           }
@@ -751,6 +752,25 @@
           "parameters" : [
             {
               "type" : "field",
+              "value" : ["ethernet", "etherType"]
+            },
+            {
+              "type" : "field",
+              "value" : ["tag", "etherType"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "merge.p4",
+            "line" : 308,
+            "column" : 4,
+            "source_fragment" : "modify_field(ethernet.etherType,tag.etherType)"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
               "value" : ["ig_intr_md_for_tm", "ucast_egress_port"]
             },
             {
@@ -760,9 +780,24 @@
           ],
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 305,
+            "line" : 306,
             "column" : 19,
             "source_fragment" : "egress_spec) { ..."
+          }
+        },
+        {
+          "op" : "remove_header",
+          "parameters" : [
+            {
+              "type" : "header",
+              "value" : "tag"
+            }
+          ],
+          "source_info" : {
+            "filename" : "merge.p4",
+            "line" : 310,
+            "column" : 4,
+            "source_fragment" : "remove_header(tag)"
           }
         }
       ]
@@ -779,7 +814,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 308,
+            "line" : 312,
             "column" : 0,
             "source_fragment" : "table tagIdentify { ..."
           },
@@ -816,7 +851,7 @@
           "id" : 1,
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 118,
+            "line" : 119,
             "column" : 0,
             "source_fragment" : "table sdnp { ..."
           },
@@ -873,7 +908,7 @@
           "id" : 2,
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 223,
+            "line" : 224,
             "column" : 0,
             "source_fragment" : "table ipv4 { ..."
           },
@@ -921,7 +956,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 318,
+            "line" : 322,
             "column" : 22,
             "source_fragment" : "=="
           },
@@ -947,7 +982,7 @@
           "id" : 1,
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 321,
+            "line" : 325,
             "column" : 22,
             "source_fragment" : "=="
           },
@@ -973,7 +1008,7 @@
           "id" : 2,
           "source_info" : {
             "filename" : "merge.p4",
-            "line" : 324,
+            "line" : 328,
             "column" : 22,
             "source_fragment" : "=="
           },
